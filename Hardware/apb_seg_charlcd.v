@@ -70,6 +70,7 @@
 `define add_line_2 8'b11000000
 `define add_line_3 8'b10010100
 `define add_line_4 8'b11010100
+`define blank_interval 10
 
 module apb_seg_charlcd(
 	PRESETn,
@@ -127,6 +128,12 @@ reg [31:0] NextPRData;
 wire [255:0]	text_lcd_input;
 //reg [255:0] text_data = 256'h30333431313738204A6F20556A696E20_3034343033323120204B696D5375686E;
                  
+reg shift;
+reg blink;
+
+reg [255:0] data;
+reg [255:0] data_tmp;
+
 assign PRDATA = RDATA;  
 
 assign LED_OUT = reg_j[7:0];
@@ -135,14 +142,15 @@ always @(posedge PCLK or negedge PRESETn)
 begin
 	if (~PRESETn) 
 	begin
-        reg_a <= {`LCD_2, 	`LCD_0, 	`LCD_0, 		`LCD_9	} ; 
-        reg_b <= {`LCD_1,  `LCD_4, 	`LCD_2, 		`LCD_1	} ; 
-        reg_c <= {`LCD_2, 	`LCD_7,`LCD_BLANK,	`LCD_BLANK	} ; 
-        reg_d <= {`LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK	} ; 
-        reg_e <= {`LCD_2, 	`LCD_0, 	`LCD_1, 	`LCD_0	} ; 
-        reg_f <= {`LCD_1, `LCD_4, `LCD_7, 	`LCD_0	} ; 
-        reg_g <= {`LCD_0, `LCD_6, `LCD_BLANK, `LCD_BLANK	} ; 
-        reg_h <= {`LCD_BLANK, `LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK	} ;
+        data <= {`LCD_2, 	`LCD_0, 	`LCD_0, 		`LCD_9,
+				`LCD_1,  `LCD_4, 	`LCD_2, 		`LCD_1	 ,
+				`LCD_2, 	`LCD_7,`LCD_BLANK,	`LCD_BLANK	,
+				`LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK	,
+				`LCD_2, 	`LCD_0, 	`LCD_1, 	`LCD_0	,
+				`LCD_1, `LCD_4, `LCD_7, 	`LCD_0	,
+				`LCD_0, `LCD_6, `LCD_BLANK, `LCD_BLANK	,
+				`LCD_BLANK, `LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK};
+
         reg_i <= 32'h00000000; 
         reg_j <= 32'h00000081;
 	end 
@@ -166,6 +174,72 @@ begin
 	end
 end
 
+reg[11:0] cnt;
+reg[3:0] data_sel;
+reg[11:0] lcd_cnt;
+
+//counter manager
+always @(posedge PCLK or negedge PRESETn) begin
+	if (~PRESETn) begin
+		cnt <= 0;
+		lcd_cnt <= 0;
+	end
+	else if (cnt == 2000) begin
+		cnt <= 0;
+		lcd_cnt <= lcd_cnt + 1;
+	end
+	else begin
+		cnt <= cnt + 1;
+	end
+end
+
+always @(posedge PCLK or negedge PRESETn) begin
+	if (~PRESETn) begin
+		lcd_cnt <= 0;
+	end
+	else if (cnt == 2000) begin
+		if (lcd_cnt == blank_interval) begin
+			lcd_cnt <= 0;
+		end
+		else begin
+			lcd_cnt <= lcd_cnt + 1;
+		end
+	end
+end
+
+reg is_on;
+
+always @(posedge PCLK or negedge PRESETn) begin
+	if (~PRESETn) begin
+		shift <= 0;
+		blink <= 0;
+	end
+	else if (shift) begin
+		if (lcd_cnt == blank_interval) begin
+			data <= {data[247:0],data[255:248]};
+		end
+	end
+	else if (blank) begin
+		if (lcd_cnt == blank_interval) begin
+			if (is_on) begin
+				data_tmp <= data;
+				data <= {`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK};	
+				is_on <= ~is_on;
+			end
+			else begin
+				data <= data_tmp;
+			end
+			
+		end
+	end
+end
 
 always @(posedge PCLK or negedge PRESETn)
 begin
@@ -195,10 +269,12 @@ begin
     endcase
 end
 
+
+
 text_lcd utext_lcd(
 					.LCDCLK(LCDCLK),
 					.PRESETn(PRESETn),
-					.data({reg_a, reg_b, reg_c, reg_d, reg_e, reg_f, reg_g, reg_h}),
+					.data(data),
 					.LCD_RS(LCD_RS),
 					.LCD_RW(LCD_RW),
 					.LCD_EN(LCD_EN),

@@ -29,6 +29,7 @@ reg[11:0] cnt;
 reg[3:0] data_sel;
 reg[255:0] data_tmp;
 
+
 //lcd controller
 always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
@@ -51,10 +52,30 @@ end
 always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
 		data_tmp <= data;
-	end
+	end	
 	else if (cnt == 2000) begin
+		if (data_sel == 15) begin
+			data_tmp <= data;
+		end
 		data_tmp <= {data_tmp[247:0] ,data_tmp[255:248]};
 	end
+end
+
+
+//lcd data selector manager
+always @(posedge LCDCLK or negedge PRESETn) begin
+	if (~PRESETn) begin
+		data_sel <= 0;
+	end
+	else if (cnt == 2000) begin
+		if (data_sel == 15) begin
+			data_sel <= 0;
+		end
+		else begin
+			data_sel <= data_sel + 1 ;
+		end
+	end
+	
 end
 
 //lcd data writer

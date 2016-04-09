@@ -31,6 +31,7 @@ void test_led(void);
 void test_7segment(void);
 //User define --------------------------------------------------------------------
 void test_text_lcd(void);
+void function_text(void);
 void blinking(void);
 void shift_left(void);
 
@@ -61,7 +62,7 @@ void arm926ejs_main(void)
     	Uart_Printf("\r\n [6] FPGA TEXT LCD TEST                ");
     	Uart_Printf("\r\n [7] TEXT LCD pop1                      ");
     	Uart_Printf("\r\n [8] TEXT LCD pop2                  ");
-    	Uart_Printf("\r\n [9]                       ");
+    	Uart_Printf("\r\n [9] TEXT LCD Function                   	");
     	Uart_Printf("\r\n [a] BYTE_test                           ");
     	Uart_Printf("\r\n [b] function_call test                  ");    	    	
     	Uart_Printf("\r\n ======================================= ");
@@ -99,7 +100,7 @@ void arm926ejs_main(void)
 
     				break;
     		case '9' :
-    				
+                    function_text();
     				break;	
     		case 'a' :
     				byte_test();
@@ -319,4 +320,10 @@ void pop_two(){
 	SEG_ADDR = (volatile unsigned int *) (0x70000020);
 	SEG_DATA = 2;
 	*SEG_ADDR = SEG_DATA;
+}
+
+void function_text()
+{
+    volatile unsigned int * SEG_ADDR;
+    unsigned int SEG_DATA;
 }
