@@ -8,20 +8,19 @@ reg PENABLE;
 reg PSEL;
 reg PWRITE;
 reg PWDATA;
-reg PRDATA;
+wire PRDATA;
 reg LCDCLK;
-reg LCD_RS;
-reg LCD_RW;
-reg LCD_EN;
-reg LCD_DATA;
-reg SEGOUT;
-reg SEGCOM;
-reg LED_OUT;
 
-conv_encoder apb_seg_charlcd(rst_n, clk10M, conv_en, sd, puncturer_en, cd1, cd2);
-//VITERBI_TOP VITERBI_TOP$0(rst_n, clk10M, CLR, V_EN, cd1, cd2,D_OUT, VITERBI_EN) ;
+wire LCD_RS;
+wire LCD_RW;
+wire LCD_EN;
+wire LCD_DATA;
+wire SEGOUT;
+wire SEGCOM;
+wire LED_OUT;
 
-apb apb_seg_charlcd(
+
+apb_seg_charlcd apbdd(
 	PRESETn,
 	PADDR,
 	PCLK,
@@ -40,13 +39,8 @@ apb apb_seg_charlcd(
 	SEGOUT,
 	SEGCOM,
 	LED_OUT	
-)
+);
 
-initial
-begin
-	conv_en = 1'b0;
-	sd = 1'b0;
-end
 
 
 initial
@@ -59,7 +53,7 @@ initial
 begin
 	PRESETn = 1'b0;
 	#100 PRESETn = 1'b1;
-	#10000000000 $finish;
+	#100000000 $finish;
 end
 
 endmodule

@@ -25,7 +25,7 @@ parameter set4 = 8'h01;
 parameter set5 = 8'h80;
 parameter set6 = 8'hc0;
 
-reg[10:0] cnt;
+reg[11:0] cnt;
 reg[3:0] data_sel;
 reg[255:0] data_tmp;
 
@@ -53,7 +53,7 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 		data_tmp <= data;
 	end
 	else if (cnt == 2000) begin
-		data_tmp <= {data_tmp[7:0] ,data_tmp[255:8]};
+		data_tmp <= {data_tmp[247:0] ,data_tmp[255:248]};
 	end
 end
 
@@ -63,7 +63,7 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 		LCD_DATA <= 0;
 	end
 	else begin
-		LCD_DATA <= data_tmp[7: 0];
+		LCD_DATA <= data_tmp[255: 248];
 	end
 end
 
