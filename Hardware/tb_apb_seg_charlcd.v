@@ -19,6 +19,8 @@ wire SEGOUT;
 wire SEGCOM;
 wire LED_OUT;
 
+reg blink;
+reg shift;
 
 apb_seg_charlcd apbdd(
 	PRESETn,
@@ -38,7 +40,9 @@ apb_seg_charlcd apbdd(
 
 	SEGOUT,
 	SEGCOM,
-	LED_OUT	
+	LED_OUT,
+	blink,
+	shift	
 );
 
 
@@ -51,8 +55,16 @@ end
 
 initial
 begin
+   blink = 0;
+	shift = 0;
 	PRESETn = 1'b0;
 	#100 PRESETn = 1'b1;
+	blink = 1;
+	shift = 0;
+	#100000 PRESETn = 1'b0;
+	#100 PRESETn = 1'b1;
+	
+
 	#100000000 $finish;
 end
 

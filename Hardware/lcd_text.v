@@ -26,7 +26,7 @@ parameter set5 = 8'h80;
 parameter set6 = 8'hc0;
 
 reg[11:0] cnt;
-reg[3:0] data_sel;
+reg[4:0] data_sel;
 reg[255:0] data_tmp;
 
 
@@ -57,7 +57,9 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 		if (data_sel == 15) begin
 			data_tmp <= data;
 		end
-		data_tmp <= {data_tmp[247:0] ,data_tmp[255:248]};
+		else begin
+		   data_tmp <= {data_tmp[247:0] ,data_tmp[255:248]};
+		end
 	end
 end
 

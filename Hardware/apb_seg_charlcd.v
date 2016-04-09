@@ -70,7 +70,7 @@
 `define add_line_2 8'b11000000
 `define add_line_3 8'b10010100
 `define add_line_4 8'b11010100
-`define blank_interval 10
+`define interval 32
 
 module apb_seg_charlcd(
 	PRESETn,
@@ -90,7 +90,9 @@ module apb_seg_charlcd(
 
 	SEGOUT,
 	SEGCOM,
-	LED_OUT	
+	LED_OUT,
+	BLINK_FLAG,
+	SHIFT_FLAG	
 );
 
 input PRESETn;
@@ -100,6 +102,9 @@ input PENABLE;
 input PSEL;
 input PWRITE;
 input [31:0] PWDATA;
+input BLINK_FLAG;
+input SHIFT_FLAG;
+
 output [31:0] PRDATA;
 
 input LCDCLK;
@@ -130,6 +135,8 @@ wire [255:0]	text_lcd_input;
                  
 reg shift;
 reg blink;
+
+
 
 reg [255:0] data;
 reg [255:0] data_tmp;
@@ -179,26 +186,24 @@ reg[3:0] data_sel;
 reg[11:0] lcd_cnt;
 
 //counter manager
-always @(posedge PCLK or negedge PRESETn) begin
+always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
 		cnt <= 0;
-		lcd_cnt <= 0;
 	end
 	else if (cnt == 2000) begin
 		cnt <= 0;
-		lcd_cnt <= lcd_cnt + 1;
 	end
 	else begin
 		cnt <= cnt + 1;
 	end
 end
 
-always @(posedge PCLK or negedge PRESETn) begin
+always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
 		lcd_cnt <= 0;
 	end
 	else if (cnt == 2000) begin
-		if (lcd_cnt == blank_interval) begin
+		if (lcd_cnt == `interval) begin
 			lcd_cnt <= 0;
 		end
 		else begin
@@ -209,18 +214,20 @@ end
 
 reg is_on;
 
-always @(posedge PCLK or negedge PRESETn) begin
+always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
-		shift <= 0;
-		blink <= 0;
+		shift <= SHIFT_FLAG;
+      blink <= BLINK_FLAG;
+		is_on <= 1;
+		data_tmp <= 0;
 	end
 	else if (shift) begin
-		if (lcd_cnt == blank_interval) begin
+		if (lcd_cnt == `interval && cnt == 2000) begin
 			data <= {data[247:0],data[255:248]};
 		end
 	end
-	else if (blank) begin
-		if (lcd_cnt == blank_interval) begin
+	else if (blink) begin
+		if (lcd_cnt == `interval && cnt == 2000) begin
 			if (is_on) begin
 				data_tmp <= data;
 				data <= {`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
@@ -234,7 +241,13 @@ always @(posedge PCLK or negedge PRESETn) begin
 				is_on <= ~is_on;
 			end
 			else begin
-				data <= data_tmp;
+			    if (data_tmp == 0) begin
+			        data_tmp <= data;
+			    end
+			    else begin
+			        data <= data_tmp;
+			    end		
+			    is_on <= ~is_on;
 			end
 			
 		end

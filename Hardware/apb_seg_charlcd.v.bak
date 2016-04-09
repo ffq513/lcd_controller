@@ -70,6 +70,7 @@
 `define add_line_2 8'b11000000
 `define add_line_3 8'b10010100
 `define add_line_4 8'b11010100
+`define interval 32
 
 module apb_seg_charlcd(
 	PRESETn,
@@ -89,7 +90,9 @@ module apb_seg_charlcd(
 
 	SEGOUT,
 	SEGCOM,
-	LED_OUT	
+	LED_OUT,
+	BLINK_FLAG,
+	SHIFT_FLAG	
 );
 
 input PRESETn;
@@ -99,6 +102,9 @@ input PENABLE;
 input PSEL;
 input PWRITE;
 input [31:0] PWDATA;
+input BLINK_FLAG;
+input SHIFT_FLAG;
+
 output [31:0] PRDATA;
 
 input LCDCLK;
@@ -120,27 +126,40 @@ reg [31:0] reg_f;
 reg [31:0] reg_g;
 reg [31:0] reg_h;
 reg [31:0] reg_i;
-
+reg [31:0] reg_j;
 reg [31:0] RDATA;
 reg [31:0] NextPRData;
+
+wire [255:0]	text_lcd_input;
+//reg [255:0] text_data = 256'h30333431313738204A6F20556A696E20_3034343033323120204B696D5375686E;
                  
+reg shift;
+reg blink;
+
+
+
+reg [255:0] data;
+reg [255:0] data_tmp;
+
 assign PRDATA = RDATA;  
+
 assign LED_OUT = reg_j[7:0];
 
 always @(posedge PCLK or negedge PRESETn)
 begin
 	if (~PRESETn) 
 	begin
-        reg_a <= {`LCD_S, 	`LCD_S_o, 	`LCD_C, 	`LCD_M		} ; 
-        reg_b <= {`LCD_S_a, `LCD_S_s, 	`LCD_S_t, 	`LCD_S_e	} ; 
-        reg_c <= {`LCD_S_r, `LCD_BLANK, `LCD_DASH, 	`LCD_BLANK	} ; 
-        reg_d <= {`LCD_I, 	`LCD_I, 	`LCD_I, 	`LCD_BLANK	} ; 
-        reg_e <= {`LCD_H, 	`LCD_S_u, 	`LCD_S_i, 	`LCD_S_n	} ; 
-        reg_f <= {`LCD_S_s, `LCD_BLANK, `LCD_C, 	`LCD_S_o	} ; 
-        reg_g <= {`LCD_DOT, `LCD_COMMA, `LCD_BLANK, `LCD_S_l	} ; 
-        reg_h <= {`LCD_S_t, `LCD_S_d, 	`LCD_DOT, 	`LCD_BLANK	} ; 
-        reg_i <= 32'h20090309;
-        reg_j <= 32'h00000000;
+        data <= {`LCD_2, 	`LCD_0, 	`LCD_0, 		`LCD_9,
+				`LCD_1,  `LCD_4, 	`LCD_2, 		`LCD_1	 ,
+				`LCD_2, 	`LCD_7,`LCD_BLANK,	`LCD_BLANK	,
+				`LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK	,
+				`LCD_2, 	`LCD_0, 	`LCD_1, 	`LCD_0	,
+				`LCD_1, `LCD_4, `LCD_7, 	`LCD_0	,
+				`LCD_0, `LCD_6, `LCD_BLANK, `LCD_BLANK	,
+				`LCD_BLANK, `LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK};
+
+        reg_i <= 32'h00000000; 
+        reg_j <= 32'h00000081;
 	end 
 	else
 	begin
@@ -155,13 +174,85 @@ begin
 				8'h14 : reg_f <= PWDATA;
 				8'h18 : reg_g <= PWDATA;
 				8'h1C : reg_h <= PWDATA;
-				8'h20 : reg_i <= PWDATA; 
-		  	8'h24 : reg_j <= PWDATA; 	
+				8'h20 : reg_i <= PWDATA;
+				8'h24 : reg_j <= PWDATA;
 			endcase
 		end
 	end
 end
 
+reg[11:0] cnt;
+reg[3:0] data_sel;
+reg[11:0] lcd_cnt;
+
+//counter manager
+always @(posedge LCDCLK or negedge PRESETn) begin
+	if (~PRESETn) begin
+		cnt <= 0;
+	end
+	else if (cnt == 2000) begin
+		cnt <= 0;
+	end
+	else begin
+		cnt <= cnt + 1;
+	end
+end
+
+always @(posedge LCDCLK or negedge PRESETn) begin
+	if (~PRESETn) begin
+		lcd_cnt <= 0;
+	end
+	else if (cnt == 2000) begin
+		if (lcd_cnt == `interval) begin
+			lcd_cnt <= 0;
+		end
+		else begin
+			lcd_cnt <= lcd_cnt + 1;
+		end
+	end
+end
+
+reg is_on;
+
+always @(posedge LCDCLK or negedge PRESETn) begin
+	if (~PRESETn) begin
+		shift <= SHIFT_FLAG;
+      blink <= BLINK_FLAG;
+		is_on <= 0;
+		data_tmp <= 0;
+	end
+	else if (shift) begin
+		if (lcd_cnt == `interval && cnt == 2000) begin
+			data <= {data[247:0],data[255:248]};
+		end
+	end
+	else if (blink) begin
+		if (lcd_cnt == `interval && cnt == 2000) begin
+			if (is_on) begin
+				data_tmp <= data;
+				data <= {`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,
+					`LCD_BLANK,`LCD_BLANK,`LCD_BLANK,`LCD_BLANK};	
+				is_on <= ~is_on;
+			end
+			else begin
+			    if (data_tmp == 0) begin
+			        data_tmp <= data;
+			    end
+			    else begin
+			        data <= data_tmp;
+			    end		
+			    is_on <= ~is_on;
+			end
+			
+		end
+	end
+end
 
 always @(posedge PCLK or negedge PRESETn)
 begin
@@ -184,19 +275,23 @@ begin
 		8'h10 : NextPRData <= reg_e;
 		8'h14 : NextPRData <= reg_f;
 		8'h18 : NextPRData <= reg_g;
-		8'h1C : NextPRData <= reg_h; 
-		8'h20 : NextPRData <= reg_i;  
+		8'h1C : NextPRData <= reg_h;
+		8'h20 : NextPRData <= reg_i; 
+		8'h24 : NextPRData <= reg_j;
 		default	: NextPRData <= 32'hFFFFFFFF;
     endcase
 end
 
-//seven seg module
-seven_seg useven_seg(
-    .clk(LCDCLK),
-    .data(reg_i),
-	.SEGOUT(SEGOUT),
-	.SEGCOM(SEGCOM)
- );
 
 
+text_lcd utext_lcd(
+					.LCDCLK(LCDCLK),
+					.PRESETn(PRESETn),
+					.data(data),
+					.LCD_RS(LCD_RS),
+					.LCD_RW(LCD_RW),
+					.LCD_EN(LCD_EN),
+					.LCD_DATA(LCD_DATA)
+					);
 endmodule
+
