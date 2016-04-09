@@ -135,14 +135,14 @@ always @(posedge PCLK or negedge PRESETn)
 begin
 	if (~PRESETn) 
 	begin
-        reg_a <= {`LCD_0, 	`LCD_3, 	`LCD_4, 		`LCD_1	} ; 
-        reg_b <= {`LCD_1,  `LCD_1, 	`LCD_7, 		`LCD_8	} ; 
-        reg_c <= {`LCD_J, 	`LCD_S_o,`LCD_BLANK,	`LCD_U	} ; 
-        reg_d <= {`LCD_J, 	`LCD_I, 	`LCD_N, 	`LCD_BLANK	} ; 
-        reg_e <= {`LCD_0, 	`LCD_4, 	`LCD_4, 	`LCD_0	} ; 
-        reg_f <= {`LCD_3, `LCD_2, `LCD_1, 	`LCD_BLANK	} ; 
-        reg_g <= {`LCD_K, `LCD_I, `LCD_M, `LCD_S	} ; 
-        reg_h <= {`LCD_U, `LCD_H, 	`LCD_A, 	`LCD_N	} ;
+        reg_a <= {`LCD_2, 	`LCD_0, 	`LCD_0, 		`LCD_9	} ; 
+        reg_b <= {`LCD_1,  `LCD_4, 	`LCD_2, 		`LCD_1	} ; 
+        reg_c <= {`LCD_2, 	`LCD_7,`LCD_BLANK,	`LCD_BLANK	} ; 
+        reg_d <= {`LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK	} ; 
+        reg_e <= {`LCD_2, 	`LCD_0, 	`LCD_1, 	`LCD_0	} ; 
+        reg_f <= {`LCD_1, `LCD_4, `LCD_7, 	`LCD_0	} ; 
+        reg_g <= {`LCD_0, `LCD_6, `LCD_BLANK, `LCD_BLANK	} ; 
+        reg_h <= {`LCD_BLANK, `LCD_BLANK, 	`LCD_BLANK, 	`LCD_BLANK	} ;
         reg_i <= 32'h00000000; 
         reg_j <= 32'h00000081;
 	end 
