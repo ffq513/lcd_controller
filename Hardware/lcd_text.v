@@ -11,10 +11,10 @@ input LCDCLK;
 input PRESETn;
 input [255:0] data;
 
-output LCD_RW;
-output LCD_RS;
-output LCD_EN;
-output [7:0]LCD_DATA;
+output reg LCD_RW;
+output reg LCD_RS;
+output reg LCD_EN;
+output reg [7:0]LCD_DATA;
 
 
 parameter set0 = 8'h38;
@@ -27,6 +27,7 @@ parameter set6 = 8'hc0;
 
 reg[10:0] cnt;
 reg[3:0] data_sel;
+reg[255:0] data_tmp;
 
 //lcd controller
 always @(posedge LCDCLK or negedge PRESETn) begin
@@ -49,15 +50,10 @@ end
 //lcd data selector manager
 always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
-		data_sel <= 0;
+		data_tmp <= data;
 	end
 	else if (cnt == 2000) begin
-		if (data_sel == 16 ) begin
-			data_sel <= 0;
-		end
-		else begin
-			data_sel <= data_sel + 1;
-		end
+		data_tmp <= {data_tmp[7:0] ,data_tmp[255:8]};
 	end
 end
 
@@ -67,7 +63,7 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 		LCD_DATA <= 0;
 	end
 	else begin
-		LCD_DATA <= data[(data_sel + 1) * 8 -1 : (data_sel) * 8];
+		LCD_DATA <= data_tmp[7: 0];
 	end
 end
 
