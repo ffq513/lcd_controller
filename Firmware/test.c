@@ -324,6 +324,11 @@ void pop_two(){
 
 void function_text()
 {
+    unsigned int c=0;
     volatile unsigned int * SEG_ADDR;
     unsigned int SEG_DATA;
+    SEG_DATA = (volatile unsigned int *)(0x70000028);
+    c = fpga_uart0_getchar();
+    Uart_SendByte(c);
+    
 }
