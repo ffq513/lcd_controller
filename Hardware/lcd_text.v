@@ -1,4 +1,4 @@
-`define init_max 5; 
+`define init_max 5
 
 module text_lcd(
 	LCDCLK,
@@ -80,7 +80,7 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 		if (data_sel == 15) begin
 			line_change <= 1;
 		end
-		else if(data_sel == 15 && line_chane ) begin
+		else if(data_sel == 15 && line_change ) begin
 			line_change <= 0;
 			data_sel <= 0;
 		end
@@ -88,7 +88,6 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 			data_sel <= data_sel + 1 ;
 		end
 	end
-	
 end
 
 //lcd data writer
@@ -96,15 +95,16 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
 		LCD_DATA <= 0;
 		LCD_RS <= 0;
+		init <= 0;
 	end
-	else if (init != `init_max && cnt == 2000)) begin
-		case(init) begin
-			0 : init <=1; LCD_DATA <= set0;
-			1 : init <=2; LCD_DATA <= set1;
-			2 : init <=3; LCD_DATA <= set2;
-			3 : init <=4; LCD_DATA <= set3;
-			4 : init <=5; LCD_DATA <= set4; LCD_RS <= 1;
-		end
+	else if (init != `init_max && cnt == 2000) begin
+		case(init) 
+			0 : begin init <=1; LCD_DATA <= set0; end
+			1 : begin init <=2; LCD_DATA <= set1; end
+			2 : begin init <=3; LCD_DATA <= set2; end
+			3 : begin init <=4; LCD_DATA <= set3; end
+			4 : begin init <=5; LCD_DATA <= set4; LCD_RS <= 1; end
+		endcase
 	end
 	else if (init == `init_max && line_change) begin
 		LCD_DATA <= set5;

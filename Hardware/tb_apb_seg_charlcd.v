@@ -61,7 +61,7 @@ begin
 	#100 PRESETn = 1'b1;
 	blink = 1;
 	shift = 0;
-	#100000 PRESETn = 1'b0;
+	#10000000 PRESETn = 1'b0;
 	#100 PRESETn = 1'b1;
 	
 
