@@ -1,4 +1,4 @@
-`define init_max 5
+`define init_max 6
 
 module text_lcd(
 	LCDCLK,
@@ -31,6 +31,9 @@ reg[11:0] cnt;
 reg[4:0] data_sel;
 reg[255:0] data_tmp;
 reg[4:0] init;
+reg line_change;
+
+
 
 
 //lcd controller
@@ -56,19 +59,15 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 		data_tmp <= data;
 	end
 	
-	else if (cnt == 2000) begin
-		if (data_sel == 15) begin
+	else if (init == `init_max && cnt == 2000) begin
+		if (data_sel == 31) begin
 			data_tmp <= data;
 		end
-		else begin
+		else if(~line_change) begin
 		   data_tmp <= {data_tmp[247:0] ,data_tmp[255:248]};
 		end
 	end
 end
-
-
-reg line_change;
-
 
 //lcd data selector manager
 always @(posedge LCDCLK or negedge PRESETn) begin
@@ -77,12 +76,19 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 		line_change <= 0;
 	end
 	else if (init == `init_max && cnt == 2000) begin
-		if (data_sel == 15) begin
-			line_change <= 1;
-		end
-		else if(data_sel == 15 && line_change ) begin
+		if(data_sel == 31 && line_change ) begin
 			line_change <= 0;
 			data_sel <= 0;
+		end
+		else if(line_change) begin
+			line_change <= 0;
+			data_sel <= data_sel + 1 ;
+		end
+		else if (data_sel == 15) begin
+			line_change <= 1;
+		end
+		else if (data_sel == 31) begin
+			line_change <= 1;
 		end
 		else begin
 			data_sel <= data_sel + 1 ;
@@ -103,11 +109,12 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 			1 : begin init <=2; LCD_DATA <= set1; end
 			2 : begin init <=3; LCD_DATA <= set2; end
 			3 : begin init <=4; LCD_DATA <= set3; end
-			4 : begin init <=5; LCD_DATA <= set4; LCD_RS <= 1; end
+			4 : begin init <=5; LCD_DATA <= set4; end
+         5 : begin init <=6; LCD_DATA <= set5; LCD_RS <= 1; end
 		endcase
 	end
 	else if (init == `init_max && line_change) begin
-		LCD_DATA <= set5;
+		LCD_DATA <= set6;
 	end
 	else begin
 		LCD_DATA <= data_tmp[255: 248];
