@@ -218,7 +218,7 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
 		shift <= SHIFT_FLAG;
       blink <= BLINK_FLAG;
-		is_on <= 0;
+		is_on <= 1;
 		data_tmp <= 0;
 	end
 	else if (shift) begin

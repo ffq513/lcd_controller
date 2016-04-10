@@ -70,7 +70,7 @@
 `define add_line_2 8'b11000000
 `define add_line_3 8'b10010100
 `define add_line_4 8'b11010100
-`define interval 32
+`define interval 34
 
 module apb_seg_charlcd(
 	PRESETn,

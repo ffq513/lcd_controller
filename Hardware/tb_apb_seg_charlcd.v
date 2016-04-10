@@ -63,6 +63,10 @@ begin
 	shift = 0;
 	#10000000 PRESETn = 1'b0;
 	#100 PRESETn = 1'b1;
+	blink = 0;
+	shift = 1;
+	#50000000 PRESETn = 1'b0;
+	#100 PRESETn = 1'b1;
 	
 
 	#100000000 $finish;
