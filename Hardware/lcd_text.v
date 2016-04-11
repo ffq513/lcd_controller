@@ -31,7 +31,8 @@ reg[11:0] cnt;
 reg[4:0] data_sel;
 reg[255:0] data_tmp;
 reg[4:0] init;
-reg line_change;
+reg line_change_1;
+reg line_change_2;
 
 
 
@@ -63,7 +64,7 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 		if (data_sel == 31) begin
 			data_tmp <= data;
 		end
-		else if(~line_change) begin
+		else if(~line_change_1 && ~line_change_2) begin
 		   data_tmp <= {data_tmp[247:0] ,data_tmp[255:248]};
 		end
 	end
@@ -73,22 +74,23 @@ end
 always @(posedge LCDCLK or negedge PRESETn) begin
 	if (~PRESETn) begin
 		data_sel <= 0;
-		line_change <= 0;
+		line_change_1 <= 0;
+		line_change_2 <= 0;
 	end
 	else if (init == `init_max && cnt == 2000) begin
-		if(data_sel == 31 && line_change ) begin
-			line_change <= 0;
+		if(data_sel == 31 && line_change_2 ) begin
+			line_change_2 <= 0;
 			data_sel <= 0;
 		end
-		else if(line_change) begin
-			line_change <= 0;
+		else if(line_change_1) begin
+			line_change_1 <= 0;
 			data_sel <= data_sel + 1 ;
 		end
 		else if (data_sel == 15) begin
-			line_change <= 1;
+			line_change_1 <= 1;
 		end
 		else if (data_sel == 31) begin
-			line_change <= 1;
+			line_change_2 <= 1;
 		end
 		else begin
 			data_sel <= data_sel + 1 ;
@@ -110,14 +112,20 @@ always @(posedge LCDCLK or negedge PRESETn) begin
 			2 : begin init <=3; LCD_DATA <= set2; end
 			3 : begin init <=4; LCD_DATA <= set3; end
 			4 : begin init <=5; LCD_DATA <= set4; end
-         5 : begin init <=6; LCD_DATA <= set5; LCD_RS <= 1; end
+         5 : begin init <=6; LCD_DATA <= set5; end
 		endcase
 	end
-	else if (init == `init_max && line_change) begin
+	else if (init == `init_max && line_change_1) begin
 		LCD_DATA <= set6;
+		LCD_RS <= 0;
+	end
+	else if (init == `init_max && line_change_2) begin
+		LCD_DATA <= set3;
+		LCD_RS <= 0;
 	end
 	else begin
 		LCD_DATA <= data_tmp[255: 248];
+		LCD_RS <= 1;
 	end
 end
 
